@@ -1,8 +1,8 @@
 // FineTune/Views/Components/LiquidGlassSlider.swift
 import SwiftUI
 
-/// A slider using native SwiftUI Slider for Liquid Glass effect on macOS 26+
-/// Styled to match the minimal track appearance of device sliders
+/// A minimalist white-fill slider that matches the macOS Control Center aesthetic.
+/// Features a horizontal oval knob: visible on hover, transparent during dragging.
 struct LiquidGlassSlider: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
@@ -12,10 +12,10 @@ struct LiquidGlassSlider: View {
     @State private var isEditing = false
     @State private var isHovered = false
 
-    /// Show thumb only when hovering or dragging
-    private var showThumb: Bool {
-        isHovered || isEditing
-    }
+    // Dimensions for the 'Official' look
+    private let trackHeight: CGFloat = 4
+    private let knobWidth: CGFloat = 16
+    private let knobHeight: CGFloat = 10
 
     init(
         value: Binding<Double>,
@@ -29,106 +29,57 @@ struct LiquidGlassSlider: View {
         self.onEditingChanged = onEditingChanged
     }
 
-    private let trackHeight: CGFloat = 4
-
     private var normalizedValue: Double {
         (value - range.lowerBound) / (range.upperBound - range.lowerBound)
     }
 
-    // Parallax offset for hover fluidity
-    private var parallaxOffset: CGFloat {
-        isHovered ? 1.5 : 0
-    }
-
     var body: some View {
         GeometryReader { geo in
-            ZStack {
-                // Custom track overlay (always visible, hides native track)
-                ZStack(alignment: .leading) {
-                    // Track background - Floating Capsule with Refraction & Specularity
-                    ZStack {
-                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
-                            .fill(.ultraThinMaterial) // Refraction
-                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.15),
-                                        Color.white.opacity(0.05)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1) // Outer shadow
-                    .overlay(
-                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.4), lineWidth: 0.5) // Inner double-layer border
-                    )
+            ZStack(alignment: .leading) {
+                // 1. Recessed Track (Dark line)
+                Capsule()
+                    .fill(Color.black.opacity(0.35))
                     .frame(height: trackHeight)
-                    .offset(y: parallaxOffset)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
-
-                    // Filled track - Highlighting the value
-                    RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
-                        .fill(DesignTokens.Colors.accentPrimary)
-                        .shadow(color: DesignTokens.Colors.accentPrimary.opacity(0.3), radius: 3, x: 0, y: 1) // Specular glow
-                        .frame(width: max(trackHeight, geo.size.width * normalizedValue), height: trackHeight)
-                        .offset(y: parallaxOffset)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
-                }
-                .frame(maxHeight: .infinity)
-                .allowsHitTesting(false)
-
-                // Unity marker at 50% (horizontally centered, vertically centered via frame)
-                if showUnityMarker {
-                    HStack {
-                        Spacer()
-                        Rectangle()
-                            .fill(DesignTokens.Colors.unityMarker)
-                            .frame(width: 1.5, height: 8)
-                        Spacer()
-                    }
-                    .frame(maxHeight: .infinity)
+                
+                // 2. Active Fill (Solid White)
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: max(trackHeight, geo.size.width * normalizedValue), height: trackHeight)
+                    .shadow(color: .white.opacity(0.2), radius: 4, x: 0, y: 0)
                     .allowsHitTesting(false)
-                }
 
-                // Native SwiftUI Slider - gets Liquid Glass thumb on macOS 26+
-                // Thumb only visible on hover/drag
+                // 3. THE DYNAMIC OVAL KNOB (Horizontal Capsule)
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: knobWidth, height: knobHeight)
+                    // Precise alignment at the end of the fill
+                    .offset(x: (geo.size.width - knobWidth) * normalizedValue)
+                    // Logic: 1.0 when hovering (not dragging), 0.0 when dragging
+                    .opacity(isHovered ? (isEditing ? 0 : 1) : 0)
+                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isHovered)
+                    .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isEditing)
+                    .allowsHitTesting(false)
+
+                // 4. THE INTERACTIVE ENGINE (Invisible)
                 Slider(value: $value, in: range) { editing in
-                    isEditing = editing
+                    withAnimation(.spring(response: 0.2)) {
+                        isEditing = editing
+                    }
                     onEditingChanged?(editing)
                 }
-                .controlSize(.mini)
-                .tint(.clear)  // Hide native track, we draw our own
-                .opacity(showThumb ? 1 : 0.01)  // Nearly invisible when not hovered, but still interactive
+                .accentColor(.clear)
+                .opacity(0.01)
+                .contentShape(Rectangle())
             }
+            .frame(height: 24)
+            .offset(y: (geo.size.height - 24) / 2)
         }
-        .frame(height: DesignTokens.Dimensions.sliderThumbHeight)
+        .frame(height: 32)
         .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}
-
-// MARK: - Preview
-
-#Preview("Liquid Glass Slider") {
-    struct PreviewWrapper: View {
-        @State private var value: Double = 0.5
-
-        var body: some View {
-            VStack(spacing: 30) {
-                LiquidGlassSlider(value: $value, showUnityMarker: true)
-                    .frame(width: 200)
-
-                Text("\(Int(value * 200))%")
-                    .foregroundStyle(.secondary)
+            withAnimation(.spring(response: 0.25)) {
+                isHovered = hovering
             }
-            .padding(40)
-            .background(Color.black)
         }
     }
-    return PreviewWrapper()
 }

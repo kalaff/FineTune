@@ -2,11 +2,9 @@
 import SwiftUI
 import AppKit
 
-/// A dark frosted glass background using NSVisualEffectView
-/// Provides deeper vibrancy than SwiftUI's built-in materials
-/// Updated for macOS 26+ Liquid Glass aesthetic
+/// Pure Liquid Glass background using system materials
 struct VisualEffectBackground: NSViewRepresentable {
-    var material: NSVisualEffectView.Material = .hudWindow
+    var material: NSVisualEffectView.Material = .popover
     var blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
 
     func makeNSView(context: Context) -> NSVisualEffectView {
@@ -14,8 +12,6 @@ struct VisualEffectBackground: NSViewRepresentable {
         view.material = material
         view.blendingMode = blendingMode
         view.state = .active
-        // Force dark appearance for consistency
-        view.appearance = NSAppearance(named: .darkAqua)
         return view
     }
 
@@ -25,80 +21,39 @@ struct VisualEffectBackground: NSViewRepresentable {
     }
 }
 
-// MARK: - Colors
-
-extension Color {
-    /// Popup background overlay - uses theme-aware color from DesignTokens
-    /// Darker than before for more contrast with floating glass rows
-    static var popupBackgroundOverlay: Color { DesignTokens.Colors.popupOverlay }
-}
-
 // MARK: - View Extensions
 
 extension View {
-    /// Applies a dark glass background using NSVisualEffectView
-    /// The primary popup container style - darker to make floating rows pop
+    /// Applies the 'Crystal Clear' popup container style
     func darkGlassBackground() -> some View {
         self
-            .background(Color.popupBackgroundOverlay)
-            .background(VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow))
+            .background(VisualEffectBackground(material: .popover, blendingMode: .behindWindow))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.cornerRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 15)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Dimensions.cornerRadius, style: .continuous))
     }
 
-    /// Applies EQ panel glass background (recessed style)
-    func eqPanelBackground() -> some View {
-        modifier(EQPanelBackgroundModifier())
+    /// Unified chunky capsule background for rows (Matches Control Center)
+    func glassRowBackground(isHovered: Bool) -> some View {
+        self
+            .background(
+                ZStack {
+                    // Deep translucent material
+                    VisualEffectBackground(material: .selection, blendingMode: .withinWindow)
+                        .opacity(isHovered ? 0.95 : 0.75)
+                    
+                    // Subtle light-wash
+                    Color.white.opacity(0.02)
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(isHovered ? 0.3 : 0.15), lineWidth: 0.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous))
+            .padding(.horizontal, 4) // Breathing room from container edge
     }
-}
-
-// MARK: - EQ Panel Background Modifier
-
-/// Modifier that applies glass background to EQ panel
-/// Locked to recessed style: dark overlay with subtle border
-struct EQPanelBackgroundModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .background {
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
-                    .fill(DesignTokens.Colors.recessedBackground)
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
-                    .strokeBorder(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
-            }
-    }
-}
-
-// MARK: - Previews
-
-#Preview("Dark Glass Popup Background") {
-    VStack(spacing: 16) {
-        Text("OUTPUT DEVICES")
-            .sectionHeaderStyle()
-        Text("Dark frosted glass background")
-            .foregroundStyle(.primary)
-    }
-    .padding(DesignTokens.Spacing.lg)
-    .frame(width: 300)
-    .darkGlassBackground()
-    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Dimensions.cornerRadius))
-    .environment(\.colorScheme, .dark)
-}
-
-#Preview("EQ Panel - Recessed") {
-    VStack(spacing: 8) {
-        Text("EQ Panel - Recessed")
-            .foregroundStyle(.secondary)
-        HStack {
-            ForEach(0..<5) { _ in
-                Rectangle()
-                    .fill(.secondary.opacity(0.3))
-                    .frame(width: 20, height: 60)
-            }
-        }
-    }
-    .padding()
-    .eqPanelBackground()
-    .padding()
-    .darkGlassBackground()
-    .environment(\.colorScheme, .dark)
 }

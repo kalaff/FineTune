@@ -17,7 +17,7 @@ struct SettingsView: View {
     var body: some View {
         // Scrollable settings content
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xl) {
                 generalSection
                 audioSection
                 notificationsSection
@@ -25,6 +25,7 @@ struct SettingsView: View {
 
                 aboutFooter
             }
+            .padding(.vertical, DesignTokens.Spacing.sm)
         }
         .scrollIndicators(.never)
     }
@@ -32,7 +33,7 @@ struct SettingsView: View {
     // MARK: - General Section
 
     private var generalSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             SectionHeader(title: "General")
                 .padding(.bottom, DesignTokens.Spacing.xs)
 
@@ -64,7 +65,7 @@ struct SettingsView: View {
     // MARK: - Audio Section
 
     private var audioSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             SectionHeader(title: "Audio")
                 .padding(.bottom, DesignTokens.Spacing.xs)
 
@@ -112,7 +113,7 @@ struct SettingsView: View {
     // MARK: - Notifications Section
 
     private var notificationsSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             SectionHeader(title: "Notifications")
                 .padding(.bottom, DesignTokens.Spacing.xs)
 
@@ -128,7 +129,7 @@ struct SettingsView: View {
     // MARK: - Data Section
 
     private var dataSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             SectionHeader(title: "Data")
                 .padding(.bottom, DesignTokens.Spacing.xs)
 
@@ -208,8 +209,3 @@ struct SettingsView: View {
         .padding(.top, DesignTokens.Spacing.sm)
     }
 }
-
-// MARK: - Previews
-
-// Note: Preview requires mock DeviceVolumeMonitor which isn't available
-// Use live testing instead

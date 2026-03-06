@@ -1,337 +1,137 @@
 // FineTune/Views/Components/DropdownMenu.swift
 import SwiftUI
 
-/// A reusable dropdown menu component with height restriction support
-struct DropdownMenu<Item: Identifiable, Label: View, ItemContent: View>: View where Item.ID: Hashable {
+/// A reusable dropdown menu component with Liquid Glass styling
+struct DropdownMenu<Item: Identifiable & Equatable>: View {
     let items: [Item]
-    let selectedItem: Item?
-    let maxVisibleItems: Int?
-    let width: CGFloat
-    let popoverWidth: CGFloat?
-    let onSelect: (Item) -> Void
-    @ViewBuilder let label: (Item?) -> Label
-    @ViewBuilder let itemContent: (Item, Bool) -> ItemContent
+    @Binding var selectedItem: Item?
+    let titleProvider: (Item) -> String
+    let iconProvider: ((Item) -> String)?
+    let placeholder: String
 
     @State private var isExpanded = false
     @State private var isButtonHovered = false
 
-    // Configuration
+    private let popoverWidth: CGFloat = 180
     private let itemHeight: CGFloat = 26
-    private let itemSpacing: CGFloat = 2
-    private let verticalPadding: CGFloat = 12  // 6 top + 6 bottom
-    private let cornerRadius: CGFloat = 8
-    private let animationDuration: Double = 0.15
 
-    private var effectivePopoverWidth: CGFloat {
-        popoverWidth ?? width
-    }
-
-    private var menuHeight: CGFloat {
-        let itemCount = CGFloat(items.count)
-        let totalSpacing = itemSpacing * Swift.max(0, itemCount - 1)
-        if let maxItems = maxVisibleItems {
-            let visibleCount = min(itemCount, CGFloat(maxItems))
-            let visibleSpacing = itemSpacing * Swift.max(0, visibleCount - 1)
-            return visibleCount * itemHeight + visibleSpacing + verticalPadding
-        }
-        return itemCount * itemHeight + totalSpacing + verticalPadding
-    }
-
-    // MARK: - Trigger Button
-    private var triggerButton: some View {
+    var body: some View {
         Button {
             withAnimation(.snappy(duration: 0.2)) {
                 isExpanded.toggle()
             }
         } label: {
             HStack {
-                label(selectedItem)
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(1)
-
-                Spacer(minLength: 4)
-
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(isExpanded ? -180 : 0))
-                    .animation(.easeInOut(duration: 0.25), value: isExpanded)
-            }
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, 4)
-            .frame(width: width)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                .fill(.regularMaterial)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                .strokeBorder(
-                    isButtonHovered ? Color.white.opacity(0.35) : Color.white.opacity(0.2),
-                    lineWidth: 0.5
-                )
-        }
-        .onHover { isButtonHovered = $0 }
-        .animation(DesignTokens.Animation.hover, value: isButtonHovered)
-    }
-
-    // MARK: - Body
-    var body: some View {
-        triggerButton
-            .background(
-                PopoverHost(isPresented: $isExpanded) {
-                    DropdownContentView(
-                        items: items,
-                        selectedItem: selectedItem,
-                        width: effectivePopoverWidth,
-                        menuHeight: menuHeight,
-                        itemHeight: itemHeight,
-                        itemSpacing: itemSpacing,
-                        cornerRadius: cornerRadius,
-                        onSelect: { item in
-                            onSelect(item)
-                            withAnimation(.easeOut(duration: animationDuration)) {
-                                isExpanded = false
-                            }
-                        },
-                        itemContent: itemContent
-                    )
-                }
-            )
-    }
-}
-
-// MARK: - Dropdown Content View
-
-private struct DropdownContentView<Item: Identifiable, ItemContent: View>: View where Item.ID: Hashable {
-    let items: [Item]
-    let selectedItem: Item?
-    let width: CGFloat
-    let menuHeight: CGFloat
-    let itemHeight: CGFloat
-    let itemSpacing: CGFloat
-    let cornerRadius: CGFloat
-    let onSelect: (Item) -> Void
-    @ViewBuilder let itemContent: (Item, Bool) -> ItemContent
-
-    var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: itemSpacing) {
-                ForEach(items) { item in
-                    DropdownMenuItem(
-                        item: item,
-                        isSelected: selectedItem?.id == item.id,
-                        itemHeight: itemHeight,
-                        onSelect: onSelect,
-                        itemContent: itemContent
-                    )
-                    .id(item.id)
-                }
-            }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 5)
-            .scrollTargetLayout()
-        }
-        .scrollPosition(id: .constant(selectedItem?.id), anchor: .center)
-        .frame(width: width, height: menuHeight)
-        .background(
-            VisualEffectBackground(material: .menu, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .strokeBorder(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
-        }
-    }
-}
-
-// MARK: - Dropdown Menu Item (with hover tracking)
-
-private struct DropdownMenuItem<Item: Identifiable, ItemContent: View>: View where Item.ID: Hashable {
-    let item: Item
-    let isSelected: Bool
-    let itemHeight: CGFloat
-    let onSelect: (Item) -> Void
-    @ViewBuilder let itemContent: (Item, Bool) -> ItemContent
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button {
-            onSelect(item)
-        } label: {
-            itemContent(item, isSelected)
-                .font(.system(size: 11))
-                .foregroundColor(.primary)
-                .padding(.horizontal, 8)
-                .frame(height: itemHeight)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(isHovered ? Color.accentColor.opacity(0.15) : Color.clear)
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .whenHovered { isHovered = $0 }
-    }
-}
-
-// MARK: - Grouped Dropdown Menu
-
-/// A dropdown menu with section headers for grouped/categorized items
-struct GroupedDropdownMenu<Section: Identifiable & Hashable, Item: Identifiable, Label: View, ItemContent: View>: View
-    where Item.ID: Hashable {
-
-    let sections: [Section]
-    let itemsForSection: (Section) -> [Item]
-    let sectionTitle: (Section) -> String
-    let selectedItem: Item?
-    let maxHeight: CGFloat
-    let width: CGFloat
-    let popoverWidth: CGFloat?
-    let onSelect: (Item) -> Void
-    @ViewBuilder let label: (Item?) -> Label
-    @ViewBuilder let itemContent: (Item, Bool) -> ItemContent
-
-    @State private var isExpanded = false
-    @State private var isButtonHovered = false
-
-    // Configuration
-    private let itemHeight: CGFloat = 22
-    private let sectionHeaderHeight: CGFloat = 24
-    private let cornerRadius: CGFloat = 8
-    private let animationDuration: Double = 0.15
-
-    private var effectivePopoverWidth: CGFloat {
-        popoverWidth ?? width
-    }
-
-    // MARK: - Trigger Button
-    private var triggerButton: some View {
-        Button {
-            withAnimation(.snappy(duration: 0.2)) {
-                isExpanded.toggle()
-            }
-        } label: {
-            HStack {
-                label(selectedItem)
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(1)
-
-                Spacer(minLength: 4)
-
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(isExpanded ? -180 : 0))
-                    .animation(.easeInOut(duration: 0.25), value: isExpanded)
-            }
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, 4)
-            .frame(width: width)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                .fill(.regularMaterial)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                .strokeBorder(
-                    isButtonHovered ? Color.white.opacity(0.35) : Color.white.opacity(0.2),
-                    lineWidth: 0.5
-                )
-        }
-        .onHover { isButtonHovered = $0 }
-        .animation(DesignTokens.Animation.hover, value: isButtonHovered)
-    }
-
-    // MARK: - Body
-    var body: some View {
-        triggerButton
-            .background(
-                PopoverHost(isPresented: $isExpanded) {
-                    GroupedDropdownContentView(
-                        sections: sections,
-                        itemsForSection: itemsForSection,
-                        sectionTitle: sectionTitle,
-                        selectedItem: selectedItem,
-                        width: effectivePopoverWidth,
-                        maxHeight: maxHeight,
-                        itemHeight: itemHeight,
-                        sectionHeaderHeight: sectionHeaderHeight,
-                        cornerRadius: cornerRadius,
-                        onSelect: { item in
-                            onSelect(item)
-                            withAnimation(.easeOut(duration: animationDuration)) {
-                                isExpanded = false
-                            }
-                        },
-                        itemContent: itemContent
-                    )
-                }
-            )
-    }
-}
-
-// MARK: - Grouped Dropdown Content View
-
-private struct GroupedDropdownContentView<Section: Identifiable & Hashable, Item: Identifiable, ItemContent: View>: View
-    where Item.ID: Hashable {
-
-    let sections: [Section]
-    let itemsForSection: (Section) -> [Item]
-    let sectionTitle: (Section) -> String
-    let selectedItem: Item?
-    let width: CGFloat
-    let maxHeight: CGFloat
-    let itemHeight: CGFloat
-    let sectionHeaderHeight: CGFloat
-    let cornerRadius: CGFloat
-    let onSelect: (Item) -> Void
-    @ViewBuilder let itemContent: (Item, Bool) -> ItemContent
-
-    var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(alignment: .leading, spacing: 2) {
-                ForEach(sections) { section in
-                    // Section header
-                    Text(sectionTitle(section))
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.top, section.id == sections.first?.id ? 2 : 8)
-                        .padding(.bottom, 2)
-                        .frame(height: sectionHeaderHeight, alignment: .bottomLeading)
-
-                    // Items in section
-                    ForEach(itemsForSection(section)) { item in
-                        DropdownMenuItem(
-                            item: item,
-                            isSelected: selectedItem?.id == item.id,
-                            itemHeight: itemHeight,
-                            onSelect: onSelect,
-                            itemContent: itemContent
-                        )
+                if let selected = selectedItem {
+                    HStack(spacing: 6) {
+                        if let iconProvider {
+                            Image(systemName: iconProvider(selected))
+                                .font(.system(size: 11))
+                        }
+                        Text(titleProvider(selected))
+                            .font(.system(size: 11, weight: .semibold))
                     }
+                } else {
+                    Text(placeholder)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? -180 : 0))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .frame(minWidth: 100)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background {
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(isButtonHovered ? 0.4 : 0.2), lineWidth: 0.5)
+        }
+        .onHover { isButtonHovered = $0 }
+        .background(
+            PopoverHost(isPresented: $isExpanded) {
+                dropdownContent
+            }
+        )
+    }
+
+    private var dropdownContent: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 2) {
+                ForEach(items) { item in
+                    Button {
+                        selectedItem = item
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            isExpanded = false
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if selectedItem == item {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(DesignTokens.Colors.accentPrimary)
+                                    .frame(width: 12)
+                            } else {
+                                Spacer().frame(width: 12)
+                            }
+
+                            if let iconProvider {
+                                Image(systemName: iconProvider(item))
+                                    .font(.system(size: 11))
+                            }
+
+                            Text(titleProvider(item))
+                                .font(.system(size: 11))
+                                .lineLimit(1)
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 8)
+                        .frame(height: itemHeight)
+                        .background {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(selectedItem == item ? Color.accentColor.opacity(0.15) : Color.clear)
+                        }
+                    }
+                    .buttonStyle(DropdownItemButtonStyle())
                 }
             }
-            .padding(5)
+            .padding(6)
         }
-        .frame(width: width)
-        .frame(maxHeight: maxHeight)
+        .frame(width: popoverWidth)
         .background(
             VisualEffectBackground(material: .menu, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous))
         )
         .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .strokeBorder(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
         }
+        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
+    }
+}
+
+private struct DropdownItemButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .overlay {
+                if configuration.isPressed {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.white.opacity(0.05))
+                }
+            }
     }
 }

@@ -44,6 +44,16 @@ Thank you for your interest in contributing to FineTune!
 - Audio callback code must be real-time safe (no allocations, locks, or ObjC)
 - Views: props first, callbacks for mutations, `@State` only for local UI state
 
+### UI Components (macOS Tahoe Liquid Glass)
+
+The app uses a Liquid Glass design language inspired by macOS Tahoe. When contributing UI changes:
+
+- **Floating Capsule** — Use continuous corner radius (`style: .continuous`) for rounded rectangles
+- **Refraction & Specularity** — Apply `.ultraThinMaterial` with semi-transparent white gradient overlays for glass effects
+- **Double-Layer Border** — 0.5pt inner white highlight (`strokeBorder`) with dynamic outer shadows
+- **Hover Fluidity** — Implement parallax offset animations (`isHovered ? 1.0 : 0`) with spring animations (response: 0.4, dampingFraction: 0.6)
+- Use existing view modifiers: `.hoverableRow()`, `.glassButtonStyle()`, `.vibrancyIcon()`
+
 ## Audio Callback Guidelines
 
 Code running in `processAudio()` must be real-time safe:

@@ -1,8 +1,7 @@
 // FineTune/Views/Components/VUMeter.swift
 import SwiftUI
 
-/// A vertical VU meter visualization for audio levels
-/// Shows 8 bars that light up based on audio level with peak hold
+/// A vertical VU meter visualization for audio levels with Liquid Glass styling
 struct VUMeter: View {
     let level: Float
     var isMuted: Bool = false
@@ -24,14 +23,23 @@ struct VUMeter: View {
                 )
             }
         }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background {
+            // Subtle glass container for the meter
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(.white.opacity(0.03))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .strokeBorder(.white.opacity(0.05), lineWidth: 0.5)
+                )
+        }
         .frame(width: DesignTokens.Dimensions.vuMeterWidth)
         .onChange(of: level) { _, newLevel in
             if newLevel > peakLevel {
-                // New peak - capture and start decay timer
                 peakLevel = newLevel
                 startPeakDecayTimer()
             } else if peakLevel > newLevel && peakHoldTimer == nil {
-                // Level dropped below peak and no timer running - start decay
                 startPeakDecayTimer()
             }
         }
@@ -43,25 +51,20 @@ struct VUMeter: View {
 
     private func startPeakDecayTimer() {
         peakHoldTimer?.invalidate()
-        // After hold period, start gradual decay using repeating timer
-        peakHoldTimer = Timer.scheduledTimer(withTimeInterval: DesignTokens.Timing.vuMeterPeakHold, repeats: false) { [self] _ in
-            // Start the gradual decay timer
+        peakHoldTimer = Timer.scheduledTimer(withTimeInterval: DesignTokens.Timing.vuMeterPeakHold, repeats: false) { _ in
             startGradualDecay()
         }
     }
 
     private func startGradualDecay() {
         peakHoldTimer?.invalidate()
-        // Decay ~24dB over 2.8 seconds (BBC PPM standard)
-        // At 30fps, that's ~84 frames, so decay rate ≈ 0.012 per frame (linear in amplitude)
-        peakHoldTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [self] timer in
-            let decayRate: Float = 0.012  // Per-frame decay
+        peakHoldTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { timer in
+            let decayRate: Float = 0.012
             if peakLevel > level {
                 withAnimation(DesignTokens.Animation.vuMeterLevel) {
                     peakLevel = max(level, peakLevel - decayRate)
                 }
             } else {
-                // Peak has reached current level, stop decaying
                 timer.invalidate()
                 peakHoldTimer = nil
             }
@@ -69,7 +72,7 @@ struct VUMeter: View {
     }
 }
 
-/// Individual bar in the VU meter
+/// Individual bar in the VU meter with Liquid Glass glow
 private struct VUMeterBar: View {
     let index: Int
     let level: Float
@@ -77,61 +80,44 @@ private struct VUMeterBar: View {
     let barCount: Int
     var isMuted: Bool = false
 
-    /// dB thresholds for 8 bars covering 40dB range
-    /// Matches professional audio meter standards (logarithmic scale)
     private static let dbThresholds: [Float] = [-40, -30, -20, -14, -10, -6, -3, 0]
 
-    /// Threshold for this bar (0-1) using dB scale
-    /// Converts dB to linear: 10^(dB/20)
     private var threshold: Float {
         let db = Self.dbThresholds[min(index, Self.dbThresholds.count - 1)]
         return powf(10, db / 20)
     }
 
-    /// Whether this bar should be lit based on current level
-    private var isLit: Bool {
-        level >= threshold
-    }
+    private var isLit: Bool { level >= threshold }
 
-    /// Whether this bar is the peak indicator
     private var isPeakIndicator: Bool {
-        // Find which bar the peak level falls into using dB thresholds
         var peakBarIndex = 0
         for i in 0..<Self.dbThresholds.count {
             let thresh = powf(10, Self.dbThresholds[i] / 20)
-            if peakLevel >= thresh {
-                peakBarIndex = i
-            }
+            if peakLevel >= thresh { peakBarIndex = i }
         }
         return index == peakBarIndex && peakLevel > level
     }
 
-    /// Color for this bar based on its position and mute state
-    /// Split: 4 green (0-3), 2 yellow (4-5), 1 orange (6), 1 red (7)
     private var barColor: Color {
-        // When muted, show gray to indicate "app is active but muted"
-        if isMuted {
-            return DesignTokens.Colors.vuMuted
-        }
-        if index < 4 {
-            return DesignTokens.Colors.vuGreen
-        } else if index < 6 {
-            return DesignTokens.Colors.vuYellow
-        } else if index < 7 {
-            return DesignTokens.Colors.vuOrange
-        } else {
-            return DesignTokens.Colors.vuRed
-        }
+        if isMuted { return DesignTokens.Colors.vuMuted }
+        if index < 4 { return DesignTokens.Colors.vuGreen }
+        else if index < 6 { return DesignTokens.Colors.vuYellow }
+        else if index < 7 { return DesignTokens.Colors.vuOrange }
+        else { return DesignTokens.Colors.vuRed }
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 1)
-            .fill(isLit || isPeakIndicator ? barColor : DesignTokens.Colors.vuUnlit)
+        let isActive = isLit || isPeakIndicator
+        
+        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+            .fill(isActive ? barColor : Color.white.opacity(0.1))
             .frame(
-                width: (DesignTokens.Dimensions.vuMeterWidth - CGFloat(barCount - 1) * DesignTokens.Dimensions.vuMeterBarSpacing) / CGFloat(barCount),
+                width: (DesignTokens.Dimensions.vuMeterWidth - 8 - CGFloat(barCount - 1) * DesignTokens.Dimensions.vuMeterBarSpacing) / CGFloat(barCount),
                 height: DesignTokens.Dimensions.vuMeterBarHeight
             )
-            .animation(DesignTokens.Animation.vuMeterLevel, value: isLit)
+            // Light-within-glass glow effect
+            .shadow(color: isActive ? barColor.opacity(0.6) : .clear, radius: 2)
+            .animation(DesignTokens.Animation.vuMeterLevel, value: isActive)
     }
 }
 

@@ -1,130 +1,115 @@
 // FineTune/Views/EQSliderView.swift
 import SwiftUI
 
+/// A vertical slider for EQ bands with Liquid Glass styling
 struct EQSliderView: View {
     let frequency: String
     @Binding var gain: Float
     let range: ClosedRange<Float> = -12...12
 
-    // Local state for smooth visual updates
     @State private var localGain: Float = 0
     @State private var isDragging: Bool = false
+    @State private var isHovered: Bool = false
 
-    // Use design tokens for slider style variant support
-    private var trackWidth: CGFloat { DesignTokens.Dimensions.sliderTrackHeight }
-    private var thumbSize: CGFloat { DesignTokens.Dimensions.sliderThumbSize }
-    private let tickCount = 5  // Number of tick marks
-    private let tickWidth: CGFloat = 3
-    private let tickGap: CGFloat = 3
-    private let verticalPadding: CGFloat = 8
+    private let trackWidth: CGFloat = 6
+    private let thumbSize: CGFloat = 16
+    private let verticalPadding: CGFloat = 12
 
     private func formatGain(_ gain: Float) -> String {
-        gain >= 0 ? String(format: "+%.0fdB", gain) : String(format: "%.0fdB", gain)
+        gain >= 0 ? String(format: "+%.0f", gain) : String(format: "%.0f", gain)
+    }
+
+    private var parallaxOffset: CGFloat {
+        (isHovered || isDragging) ? 1.0 : 0
     }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             GeometryReader { geo in
-                // Thumb travels within padded range
                 let travelHeight = geo.size.height - (verticalPadding * 2)
                 let normalizedGain = CGFloat((localGain - range.lowerBound) / (range.upperBound - range.lowerBound))
                 let thumbY = verticalPadding + travelHeight * (1 - normalizedGain)
 
-                Color.clear
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                isDragging = true
-                                // Map touch to padded range
-                                let normalizedY = (value.location.y - verticalPadding) / travelHeight
-                                let normalized = 1 - normalizedY
-                                let clamped = min(max(normalized, 0), 1)
-                                let newGain = Float(clamped) * (range.upperBound - range.lowerBound) + range.lowerBound
-                                localGain = newGain
-                                gain = newGain
-                            }
-                            .onEnded { _ in
-                                isDragging = false
-                            }
-                    )
-                    .overlay {
-                        // All visuals - no hit testing
-                        ZStack {
-                            // Tick marks on LEFT side
-                            VStack(spacing: 0) {
-                                ForEach(0..<tickCount, id: \.self) { index in
-                                    if index > 0 { Spacer() }
-                                    Rectangle()
-                                        .fill(DesignTokens.Colors.textTertiary.opacity(0.4))
-                                        .frame(width: tickWidth, height: 1)
-                                }
-                            }
-                            .frame(height: travelHeight)
-                            .offset(x: -(trackWidth / 2 + tickGap + tickWidth / 2))
-
-                            // Tick marks on RIGHT side
-                            VStack(spacing: 0) {
-                                ForEach(0..<tickCount, id: \.self) { index in
-                                    if index > 0 { Spacer() }
-                                    Rectangle()
-                                        .fill(DesignTokens.Colors.textTertiary.opacity(0.4))
-                                        .frame(width: tickWidth, height: 1)
-                                }
-                            }
-                            .frame(height: travelHeight)
-                            .offset(x: trackWidth / 2 + tickGap + tickWidth / 2)
-
-                            // Track (full height)
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(DesignTokens.Colors.sliderTrack)
-                                .frame(width: trackWidth)
-
-                            // Center line (0 dB marker) - spans across ticks
-                            Rectangle()
-                                .fill(DesignTokens.Colors.unityMarker)
-                                .frame(width: trackWidth + (tickGap + tickWidth) * 2, height: 1.5)
-
-                            // Knob-style thumb (themed background with center dot)
-                            ZStack {
-                                Circle()
-                                    .fill(DesignTokens.Colors.thumbBackground)
-                                Circle()
-                                    .fill(DesignTokens.Colors.thumbDot)
-                                    .frame(width: thumbSize * 0.35, height: thumbSize * 0.35)
-                            }
-                            .frame(width: thumbSize, height: thumbSize)
-                            .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
-                            .position(x: geo.size.width / 2, y: thumbY)
-
-                            // dB value label (appears during drag)
-                            if isDragging {
-                                Text(formatGain(localGain))
-                                    .font(.system(size: 9, weight: .medium).monospacedDigit())
-                                    .foregroundStyle(DesignTokens.Colors.textPrimary)
-                                    .fixedSize()
-                                    .position(x: geo.size.width / 2, y: thumbY - thumbSize / 2 - 10)
-                            }
-                        }
-                        .allowsHitTesting(false)
+                ZStack {
+                    // 1. Background Track (Glass Tube)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: trackWidth / 2, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                        
+                        RoundedRectangle(cornerRadius: trackWidth / 2, style: .continuous)
+                            .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
                     }
+                    .frame(width: trackWidth)
+                    .offset(y: parallaxOffset)
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+
+                    // 2. Center (Unity) Marker
+                    Rectangle()
+                        .fill(.white.opacity(0.3))
+                        .frame(width: 14, height: 1.5)
+                        .offset(y: parallaxOffset)
+
+                    // 3. THE THUMB (Floating Glass Lens)
+                    ZStack {
+                        // Glass Lens
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
+                            )
+                        
+                        // Center Dot (Active indicator)
+                        Circle()
+                            .fill(DesignTokens.Colors.accentPrimary)
+                            .frame(width: 4, height: 4)
+                            .shadow(color: DesignTokens.Colors.accentPrimary.opacity(0.6), radius: 3)
+                    }
+                    .frame(width: thumbSize, height: thumbSize)
+                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
+                    .position(x: geo.size.width / 2, y: thumbY + parallaxOffset)
+
+                    // 4. Interaction Area
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    isDragging = true
+                                    let normalizedY = (value.location.y - verticalPadding) / travelHeight
+                                    let normalized = 1 - normalizedY
+                                    let clamped = min(max(normalized, 0), 1)
+                                    let newGain = Float(clamped) * (range.upperBound - range.lowerBound) + range.lowerBound
+                                    localGain = newGain
+                                    gain = newGain
+                                }
+                                .onEnded { _ in
+                                    isDragging = false
+                                }
+                        )
+                }
+            }
+            .frame(width: 32) // Touch width
+            .onHover { hovering in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isHovered = hovering
+                }
             }
 
+            // Labels
             VStack(spacing: 0) {
+                Text(formatGain(localGain))
+                    .font(.system(size: 9, weight: .bold).monospacedDigit())
+                    .foregroundStyle(isDragging ? DesignTokens.Colors.accentPrimary : .secondary)
+                
                 Text(frequency)
-                    .font(DesignTokens.Typography.eqLabel)
-                    .foregroundStyle(DesignTokens.Colors.textSecondary)
-                Text("Hz")
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundStyle(DesignTokens.Colors.textTertiary)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.primary)
             }
+            .offset(y: parallaxOffset)
         }
-        .onAppear {
-            localGain = gain  // Initialize from binding
-        }
-        .onChange(of: gain) { _, newValue in
-            localGain = newValue  // Sync from external changes
-        }
+        .onAppear { localGain = gain }
+        .onChange(of: gain) { _, newValue in localGain = newValue }
     }
 }
 

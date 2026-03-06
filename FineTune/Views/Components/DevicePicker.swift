@@ -160,59 +160,55 @@ struct DevicePicker: View {
                 HStack(spacing: DesignTokens.Spacing.xs) {
                     triggerIcon
                     Text(triggerText)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 11, weight: .semibold))
                         .lineLimit(1)
                 }
 
                 Spacer(minLength: 4)
 
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
+                    .font(.system(size: 8, weight: .bold))
                     .foregroundStyle(.secondary)
                     .rotationEffect(.degrees(isExpanded ? -180 : 0))
-                    .animation(.easeInOut(duration: 0.25), value: isExpanded)
             }
             .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .frame(width: triggerWidth)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                .fill(.regularMaterial)
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                .fill(Color.white.opacity(0.08))
         }
         .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
                 .strokeBorder(
-                    isButtonHovered ? Color.white.opacity(0.35) : Color.white.opacity(0.2),
+                    Color.white.opacity(isButtonHovered ? 0.4 : 0.2),
                     lineWidth: 0.5
                 )
         }
         .onHover { isButtonHovered = $0 }
-        .animation(DesignTokens.Animation.hover, value: isButtonHovered)
     }
 
     // MARK: - Dropdown Content
 
     private var dropdownContent: some View {
         VStack(spacing: 0) {
-            // Mode toggle header (hidden for single-mode-only contexts like Settings)
+            // Mode toggle header
             if showModeToggle {
                 ModeToggle(mode: Binding(
                     get: { currentMode },
                     set: { newMode in
-                        currentMode = newMode  // Update local state immediately
-                        onModeChange(newMode)  // Notify parent
-                        // States are independent - no copying between modes
+                        currentMode = newMode
+                        onModeChange(newMode)
                     }
                 ))
-                .padding(.horizontal, DesignTokens.Spacing.xs + 2)
-                .padding(.top, DesignTokens.Spacing.xs + 2)
-                .padding(.bottom, DesignTokens.Spacing.xs)
+                .padding(DesignTokens.Spacing.sm)
 
                 Divider()
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, 8)
+                    .opacity(0.5)
             }
 
             // Device list
@@ -222,20 +218,20 @@ struct DevicePicker: View {
                         deviceRow(for: item)
                     }
                 }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 5)
+                .padding(6)
             }
             .frame(maxHeight: 220)
         }
         .frame(width: popoverWidth)
         .background(
             VisualEffectBackground(material: .menu, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous))
         )
         .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .strokeBorder(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
         }
+        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
     }
 
     // MARK: - Device Row

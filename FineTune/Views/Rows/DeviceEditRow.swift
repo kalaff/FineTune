@@ -139,15 +139,15 @@ private struct EditablePriority: View {
         }
         .background {
             if isEditing {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(DesignTokens.Colors.accentPrimary.opacity(0.12))
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius / 2)
+                    .fill(DesignTokens.Colors.accentPrimary.opacity(0.15))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(DesignTokens.Colors.accentPrimary.opacity(0.4), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius / 2)
+                            .strokeBorder(DesignTokens.Colors.accentPrimary.opacity(0.5), lineWidth: 1)
                     }
             } else if isHovered {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.primary.opacity(0.08))
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius / 2)
+                    .fill(Color.white.opacity(0.1))
             }
         }
         .frame(width: 16, alignment: .center)

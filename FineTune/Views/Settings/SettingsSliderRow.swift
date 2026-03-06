@@ -30,8 +30,8 @@ struct SettingsSliderRow: View {
 
     var body: some View {
         SettingsRowView(icon: icon, title: title, description: description) {
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                Slider(
+            HStack(spacing: DesignTokens.Spacing.md) {
+                LiquidGlassSlider(
                     value: Binding(
                         get: { Double(value) },
                         set: { value = Float($0) }

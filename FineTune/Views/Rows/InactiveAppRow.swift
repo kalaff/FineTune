@@ -122,7 +122,7 @@ struct InactiveAppRow: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: DesignTokens.Dimensions.iconSize, height: DesignTokens.Dimensions.iconSize)
-                    .opacity(0.6)  // Dimmed to indicate inactive state
+                    .opacity(0.4)  // More translucent for inactive state
 
                 // App name - expands to fill available space
                 Text(appInfo.displayName)
@@ -130,7 +130,7 @@ struct InactiveAppRow: View {
                     .lineLimit(1)
                     .help(appInfo.displayName)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .foregroundStyle(DesignTokens.Colors.textSecondary)  // Dimmed text
+                    .foregroundStyle(DesignTokens.Colors.textSecondary.opacity(0.7))  // Dimmed text
 
                 // Shared controls section (VU meter always 0 for inactive apps)
                 AppRowControls(

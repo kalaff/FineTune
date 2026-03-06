@@ -39,6 +39,7 @@
 - **Volume boost** — Amplify up to 400%
 - **Menu bar app** — Lightweight, always accessible
 - **URL schemes** — Automate volume, mute, device routing, and more from scripts
+- **macOS Tahoe UI** — Beautiful Liquid Glass aesthetic with refraction effects, hover fluidity animations, and floating capsule design
 
 <p align="center">
   <img src="assets/screenshot-input.png" alt="FineTune input device control" width="400">
