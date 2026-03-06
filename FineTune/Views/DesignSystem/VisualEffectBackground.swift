@@ -58,11 +58,11 @@ struct EQPanelBackgroundModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background {
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
                     .fill(DesignTokens.Colors.recessedBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
                     .strokeBorder(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
             }
     }
