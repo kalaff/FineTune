@@ -419,7 +419,28 @@ struct MenuBarPopupView: View {
                         Text(device.name)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .fill(.ultraThinMaterial)
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.12),
+                                                    Color.white.opacity(0.04)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                }
+                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
+                                )
+                            )
                     }
                     .dropDestination(for: String.self) { droppedUIDs, _ in
                         guard let droppedUID = droppedUIDs.first,

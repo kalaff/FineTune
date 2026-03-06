@@ -131,9 +131,9 @@ struct GlassButtonStyleModifier: ViewModifier {
             .padding(.vertical, DesignTokens.Spacing.xs)
             .background {
                 ZStack {
-                    Capsule(style: .continuous)
+                    Capsule()
                         .fill(.ultraThinMaterial) // Refraction
-                    Capsule(style: .continuous)
+                    Capsule()
                         .fill(
                             LinearGradient( // Specularity
                                 colors: [
@@ -150,7 +150,7 @@ struct GlassButtonStyleModifier: ViewModifier {
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
             }
             .overlay {
-                Capsule(style: .continuous)
+                Capsule()
                     .strokeBorder(
                         Color.white.opacity(isHovered ? 0.4 : 0.2), // Inner border
                         lineWidth: 0.5

@@ -28,23 +28,45 @@ struct ExpandableGlassRow<Header: View, ExpandedContent: View>: View {
         }
         .padding(.horizontal, DesignTokens.Spacing.sm)
         .padding(.vertical, DesignTokens.Spacing.xs)
+        // Background container with Refraction & Specularity
         .background {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius)
-                .fill(.ultraThinMaterial)
+            ZStack {
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                    .fill(.ultraThinMaterial) // Refraction
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                    .fill(
+                        LinearGradient( // Specularity
+                            colors: [
+                                Color.white.opacity(0.12),
+                                Color.white.opacity(0.04)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            .shadow(color: .black.opacity(isHovered ? 0.2 : 0.1), radius: isHovered ? 4 : 2, x: 0, y: isHovered ? 2 : 1) // Outer shadow changing on hover
+            .offset(y: isHovered ? 1.0 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
         }
-        // Hover effect overlay (materials don't have native hover states)
+        // Double-Layer Border (inner white border)
         .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius)
-                .fill(isHovered ? Color.white.opacity(0.04) : Color.clear)
+            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(isHovered ? 0.3 : 0.15), lineWidth: 0.5)
                 .allowsHitTesting(false)
+                .offset(y: isHovered ? 1.0 : 0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
         }
+        // Hover highlight overlay
         .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius)
-                .strokeBorder(
-                    isHovered ? DesignTokens.Colors.glassBorderHover : DesignTokens.Colors.glassBorder,
-                    lineWidth: 0.5
-                )
-                .allowsHitTesting(false)
+            ZStack {
+                if isHovered {
+                    RoundedRectangle(cornerRadius: DesignTokens.Dimensions.rowRadius, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                        .offset(y: 1.0)
+                        .transition(.opacity)
+                }
+            }
         }
         .onHover { hovering in
             isHovered = hovering
