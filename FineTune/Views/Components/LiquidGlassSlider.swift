@@ -35,20 +35,48 @@ struct LiquidGlassSlider: View {
         (value - range.lowerBound) / (range.upperBound - range.lowerBound)
     }
 
+    // Parallax offset for hover fluidity
+    private var parallaxOffset: CGFloat {
+        isHovered ? 1.5 : 0
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 // Custom track overlay (always visible, hides native track)
                 ZStack(alignment: .leading) {
-                    // Track background
-                    Capsule()
-                        .fill(DesignTokens.Colors.sliderTrack)
-                        .frame(height: trackHeight)
+                    // Track background - Floating Capsule with Refraction & Specularity
+                    ZStack {
+                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
+                            .fill(.ultraThinMaterial) // Refraction
+                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.15),
+                                        Color.white.opacity(0.05)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1) // Outer shadow
+                    .overlay(
+                        RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.4), lineWidth: 0.5) // Inner double-layer border
+                    )
+                    .frame(height: trackHeight)
+                    .offset(y: parallaxOffset)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
 
-                    // Filled track
-                    Capsule()
+                    // Filled track - Highlighting the value
+                    RoundedRectangle(cornerRadius: trackHeight / 2, style: .continuous)
                         .fill(DesignTokens.Colors.accentPrimary)
+                        .shadow(color: DesignTokens.Colors.accentPrimary.opacity(0.3), radius: 3, x: 0, y: 1) // Specular glow
                         .frame(width: max(trackHeight, geo.size.width * normalizedValue), height: trackHeight)
+                        .offset(y: parallaxOffset)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
                 }
                 .frame(maxHeight: .infinity)
                 .allowsHitTesting(false)

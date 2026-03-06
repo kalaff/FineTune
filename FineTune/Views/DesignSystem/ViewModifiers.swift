@@ -6,24 +6,53 @@ import SwiftUI
 struct HoverableRowModifier: ViewModifier {
     @State private var isHovered = false
 
+    private var parallaxOffset: CGFloat {
+        isHovered ? 1.0 : 0
+    }
+
     func body(content: Content) -> some View {
         content
             .padding(.horizontal, DesignTokens.Spacing.sm)
             .padding(.vertical, DesignTokens.Spacing.xs)
+            // Background container with Refraction & Specularity
             .background(
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                    .fill(.ultraThinMaterial)
+                ZStack {
+                    RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                        .fill(.ultraThinMaterial) // Refraction
+                    RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                        .fill(
+                            LinearGradient( // Specularity
+                                colors: [
+                                    Color.white.opacity(0.12),
+                                    Color.white.opacity(0.04)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                }
+                .shadow(color: .black.opacity(isHovered ? 0.2 : 0.1), radius: isHovered ? 4 : 2, x: 0, y: isHovered ? 2 : 1) // Outer shadow changing on hover
+                .offset(y: parallaxOffset)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
             )
-            // Hover effect overlay (materials don't have native hover states)
+            // Double-Layer Border (inner white border)
             .overlay(
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                    .fill(isHovered ? Color.white.opacity(0.04) : Color.clear)
+                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(isHovered ? 0.3 : 0.15), lineWidth: 0.5)
                     .allowsHitTesting(false)
+                    .offset(y: parallaxOffset)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
             )
+            // Hover highlight overlay
             .overlay(
-                RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius)
-                    .stroke(DesignTokens.Colors.glassBorder, lineWidth: 0.5)
-                    .allowsHitTesting(false)
+                ZStack {
+                    if isHovered {
+                        RoundedRectangle(cornerRadius: DesignTokens.Dimensions.buttonRadius, style: .continuous)
+                            .fill(Color.white.opacity(0.06))
+                            .offset(y: parallaxOffset)
+                            .transition(.opacity)
+                    }
+                }
             )
             .onHover { hovering in
                 isHovered = hovering
@@ -92,20 +121,42 @@ struct GlassButtonStyleModifier: ViewModifier {
     @State private var isHovered = false
     @State private var isPressed = false
 
+    private var parallaxOffset: CGFloat {
+        isPressed ? 0.5 : (isHovered ? 1.0 : 0)
+    }
+
     func body(content: Content) -> some View {
         content
             .padding(.horizontal, DesignTokens.Spacing.sm)
             .padding(.vertical, DesignTokens.Spacing.xs)
             .background {
-                Capsule()
-                    .fill(.ultraThinMaterial)
+                ZStack {
+                    Capsule(style: .continuous)
+                        .fill(.ultraThinMaterial) // Refraction
+                    Capsule(style: .continuous)
+                        .fill(
+                            LinearGradient( // Specularity
+                                colors: [
+                                    Color.white.opacity(0.12),
+                                    Color.white.opacity(0.04)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                }
+                .shadow(color: .black.opacity(isHovered ? 0.2 : 0.1), radius: isHovered ? 3 : 1.5, x: 0, y: isHovered ? 2 : 1)
+                .offset(y: parallaxOffset)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
             }
             .overlay {
-                Capsule()
+                Capsule(style: .continuous)
                     .strokeBorder(
-                        isHovered ? DesignTokens.Colors.glassBorderHover : DesignTokens.Colors.glassBorder,
+                        Color.white.opacity(isHovered ? 0.4 : 0.2), // Inner border
                         lineWidth: 0.5
                     )
+                    .offset(y: parallaxOffset)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHovered)
             }
             .scaleEffect(isPressed ? 0.97 : (isHovered ? 1.02 : 1.0))
             .onHover { hovering in
