@@ -282,7 +282,7 @@ final class AudioProcessMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain
             )
-            AudioObjectRemovePropertyListenerBlock(.system, &addr, .main, block)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main, block)
         }
 
         // Remove all per-process listeners

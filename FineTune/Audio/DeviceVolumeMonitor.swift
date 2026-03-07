@@ -986,7 +986,7 @@ final class DeviceVolumeMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain
             )
-            AudioObjectRemovePropertyListenerBlock(.system, &addr, .main, block)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main, block)
         }
 
         // Remove system output device listener
@@ -996,7 +996,7 @@ final class DeviceVolumeMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain
             )
-            AudioObjectRemovePropertyListenerBlock(.system, &addr, .main, block)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main, block)
         }
 
         // Remove default input device listener
@@ -1006,7 +1006,7 @@ final class DeviceVolumeMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain
             )
-            AudioObjectRemovePropertyListenerBlock(.system, &addr, .main, block)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main, block)
         }
 
         // Remove all output volume listeners

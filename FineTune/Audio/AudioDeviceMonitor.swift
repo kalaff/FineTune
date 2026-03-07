@@ -231,7 +231,7 @@ final class AudioDeviceMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain
             )
-            AudioObjectRemovePropertyListenerBlock(.system, &addr, .main, block)
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, .main, block)
         }
     }
 }

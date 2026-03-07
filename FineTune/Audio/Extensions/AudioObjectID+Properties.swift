@@ -26,7 +26,9 @@ extension AudioObjectID {
         )
         var size = UInt32(MemoryLayout<T>.size)
         var value = defaultValue
-        let err = AudioObjectGetPropertyData(self, &address, 0, nil, &size, &value)
+        let err = withUnsafeMutablePointer(to: &value) { ptr in
+            AudioObjectGetPropertyData(self, &address, 0, nil, &size, ptr)
+        }
         guard err == noErr else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(err))
         }
@@ -50,11 +52,13 @@ extension AudioObjectID {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(err))
         }
 
-        var cfString: CFString = "" as CFString
-        err = AudioObjectGetPropertyData(self, &address, 0, nil, &size, &cfString)
+        var cfString: Unmanaged<CFString>?
+        err = withUnsafeMutablePointer(to: &cfString) { ptr in
+            AudioObjectGetPropertyData(self, &address, 0, nil, &size, ptr)
+        }
         guard err == noErr else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(err))
         }
-        return cfString as String
+        return cfString?.takeRetainedValue() as String? ?? ""
     }
 }
