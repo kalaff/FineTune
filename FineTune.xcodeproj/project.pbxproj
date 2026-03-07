@@ -37,9 +37,22 @@
 		79A607C62F05C9E10008D52A /* FineTuneUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FineTuneUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0DC2DD782F5BBCE800271005 /* Exceptions for "FineTune" folder in "FineTune" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 79A607AE2F05C9E00008D52A /* FineTune */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		79A607B12F05C9E00008D52A /* FineTune */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0DC2DD782F5BBCE800271005 /* Exceptions for "FineTune" folder in "FineTune" target */,
+			);
 			path = FineTune;
 			sourceTree = "<group>";
 		};
